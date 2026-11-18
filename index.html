@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sound Elements Challenge</title>
+<style>
+  :root {
+    --pink: #f7b8d0;
+    --pink-dark: #e879aa;
+    --pink-light: #fff0f6;
+    --purple: #9272bd;
+    --ink: #493746;
+    --white: #fff;
+    --green: #4baf83;
+    --red: #df6680;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font-family: "Trebuchet MS", Arial, sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at 15% 15%, #fff 0 8%, transparent 9%),
+                linear-gradient(135deg, #ffe8f1, #f8c8dc 55%, #e9d8fa);
+    display: flex; align-items: center; justify-content: center; padding: 22px;
+  }
+  .app {
+    width: min(850px, 100%); background: rgba(255,255,255,.94);
+    border: 4px solid #fff; border-radius: 28px; padding: clamp(20px, 4vw, 38px);
+    box-shadow: 0 18px 50px rgba(125, 65, 105, .18); position: relative; overflow: hidden;
+  }
+  .app:before, .app:after { content:"✦"; position:absolute; color:#f2a8c8; font-size:34px; opacity:.65; }
+  .app:before { top:18px; left:22px; } .app:after { bottom:18px; right:25px; }
+  .topbar { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; }
+  .pill { border:0; border-radius:999px; padding:10px 15px; background:#fff0f6; color:#8d5272; font-weight:700; cursor:pointer; }
+  h1 { text-align:center; color:#d65d95; font-size:clamp(2rem, 6vw, 3.5rem); margin:8px 0; line-height:1.05; }
+  h2 { color:#bd5c8c; text-align:center; margin:8px 0 14px; }
+  p { line-height:1.55; }
+  .mascot { text-align:center; font-size:clamp(4rem, 12vw, 7rem); margin:10px 0; filter: drop-shadow(0 8px 4px #efc1d4); }
+  .subtitle { text-align:center; font-size:1.1rem; max-width:580px; margin:12px auto 24px; }
+  .primary, .secondary, .answer {
+    border:0; border-radius:16px; padding:15px 20px; font-size:1rem; font-weight:800;
+    cursor:pointer; transition:transform .15s, box-shadow .15s; font-family:inherit;
+  }
+  button:hover { transform:translateY(-2px); }
+  button:focus-visible { outline:3px solid #8c62b4; outline-offset:3px; }
+  .primary { background:linear-gradient(135deg,#ef91b8,#d66ba0); color:white; box-shadow:0 6px 0 #bd5c8c; }
+  .secondary { background:#eee4fa; color:#70558e; }
+  .center { text-align:center; }
+  .actions { display:flex; justify-content:center; flex-wrap:wrap; gap:12px; margin-top:20px; }
+  .instructions { background:#fff5f9; border:2px dashed #f2b4ce; padding:15px 18px; border-radius:16px; margin:18px auto; max-width:600px; }
+  .instructions ul { margin:8px 0 0; padding-left:22px; }
+  .hidden { display:none !important; }
+  .stats { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; color:#875574; font-weight:800; margin-bottom:12px; }
+  .progress { height:12px; background:#f8dfeb; border-radius:20px; overflow:hidden; margin-bottom:25px; }
+  .progress-fill { height:100%; width:0; background:linear-gradient(90deg,#f29abd,#9c80ca); transition:width .3s; }
+  .question-card { background:linear-gradient(135deg,#fff7fb,#f7efff); border:2px solid #f3d2e2; border-radius:22px; padding:24px; text-align:center; }
+  .question-icon { font-size:3rem; margin-bottom:8px; }
+  .question { font-size:clamp(1.15rem,3vw,1.45rem); font-weight:800; margin:8px 0 20px; }
+  .answers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+  .answer { background:#fff; color:#6c4d68; border:2px solid #f0c9dc; box-shadow:0 4px 0 #f0dce7; min-height:62px; }
+  .answer.correct { background:#e1f7ed; border-color:#75c9a3; color:#267653; }
+  .answer.wrong { background:#ffe6eb; border-color:#e88ca1; color:#a33d59; }
+  .answer:disabled { cursor:default; opacity:1; }
+  .feedback { min-height:34px; text-align:center; font-weight:800; margin-top:16px; font-size:1.1rem; }
+  .feedback.good { color:#26966a; } .feedback.bad { color:#c64c6b; }
+  .small { font-size:.9rem; color:#866d81; }
+  .score { font-size:clamp(2.6rem,8vw,4.4rem); font-weight:900; color:#d65d95; margin:8px; }
+  .finish-icon { font-size:5rem; text-align:center; }
+  .confetti { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+  .confetti span { position:absolute; top:-25px; font-size:22px; animation:fall 3.5s linear infinite; }
+  @keyframes fall { to { transform:translateY(900px) rotate(600deg); } }
+  @media(max-width:560px) { .answers { grid-template-columns:1fr; } .topbar { align-items:flex-start; } }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="topbar">
+    <span class="pill">🎧 AUDIO CLASSROOM</span>
+    <div>
+      <button class="pill" id="musicBtn" type="button">♫ Music: ON</button>
+      <button class="pill" id="soundBtn" type="button">🔊 Sound: ON</button>
+    </div>
+  </div>
+
+  <section id="startScreen">
+    <div class="mascot">🎧🌸</div>
+    <h1>SOUND ELEMENTS<br>CHALLENGE</h1>
+    <p class="subtitle">Listen, think and choose the correct sound element! Explore the five sounds used in audio production.</p>
+    <div class="instructions">
+      <strong>How to play:</strong>
+      <ul>
+        <li>Answer 10 multiple-choice questions.</li>
+        <li>Choose one answer for each question.</li>
+        <li>Get instant feedback and try your best!</li>
+      </ul>
+    </div>
+    <div class="actions"><button class="primary" id="startBtn" type="button">▶ START GAME</button></div>
+    <p class="center small">Dialogue • Sound Effects • Background Music • Ambience • Foley</p>
+  </section>
+
+  <section id="gameScreen" class="hidden">
+    <div class="stats">
+      <span id="questionCount">Question 1 / 10</span>
+      <span id="scoreCount">⭐ Score: 0</span>
+    </div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="question-card">
+      <div class="question-icon" id="questionIcon">🎬</div>
+      <div class="question" id="questionText"></div>
+      <div class="answers" id="answers"></div>
+    </div>
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+    <div class="actions">
+      <button class="primary hidden" id="nextBtn" type="button">NEXT QUESTION →</button>
+    </div>
+  </section>
+
+  <section id="finishScreen" class="hidden">
+    <div class="confetti" id="confetti"></div>
+    <div class="finish-icon">🏆🌸</div>
+    <h1>CONGRATULATIONS!</h1>
+    <p class="center">You have completed the Sound Elements Challenge.</p>
+    <div class="center">
+      <div class="score" id="finalScore">0 / 10</div>
+      <strong id="resultMessage"></strong>
+      <p class="small">Keep practising and become a sound expert!</p>
+    </div>
+    <div class="actions">
+      <button class="primary" id="playAgainBtn" type="button">↻ PLAY AGAIN</button>
+      <button class="secondary" id="homeBtn" type="button">⌂ HOME</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const questions = [
+    { icon:"🗣️", text:"Two characters are talking to each other in a film. Which sound element is this?", options:["Dialogue","Ambience","Foley","Background Music"], answer:"Dialogue", explain:"Dialogue is spoken words or conversations." },
+    { icon:"💥", text:"A loud explosion is added to an action movie scene. Which sound element is this?", options:["Foley","Sound Effects","Dialogue","Ambience"], answer:"Sound Effects", explain:"Sound effects add special sounds such as explosions." },
+    { icon:"🎹", text:"Soft romantic piano music plays during a love scene. Which sound element is this?", options:["Ambience","Dialogue","Background Music","Foley"], answer:"Background Music", explain:"Background music helps create the mood and emotion." },
+    { icon:"🐦", text:"Birds are chirping in a forest scene. Which sound element is this?", options:["Sound Effects","Foley","Dialogue","Ambience"], answer:"Ambience", explain:"Ambience gives the feeling of a particular environment." },
+    { icon:"👟", text:"A sound artist records shoes walking on a wooden floor to match a scene. Which sound element is this?", options:["Foley","Background Music","Ambience","Dialogue"], answer:"Foley", explain:"Foley recreates everyday sounds to match actions." },
+    { icon:"🎙️", text:"A narrator speaks and explains a documentary. Which sound element is this?", options:["Sound Effects","Dialogue","Foley","Ambience"], answer:"Dialogue", explain:"Narration is a form of dialogue or spoken audio." },
+    { icon:"⛈️", text:"Thunder crashes loudly during a storm scene. Which sound element is this?", options:["Background Music","Ambience","Sound Effects","Foley"], answer:"Sound Effects", explain:"Thunder used as a dramatic event sound is a sound effect." },
+    { icon:"🎼", text:"Gentle music plays quietly behind a conversation. Which sound element is this?", options:["Foley","Dialogue","Background Music","Sound Effects"], answer:"Background Music", explain:"Background music plays underneath the main action or dialogue." },
+    { icon:"🚗", text:"You hear steady traffic noise in a busy city street scene. Which sound element is this?", options:["Ambience","Foley","Dialogue","Background Music"], answer:"Ambience", explain:"Traffic noise helps establish the city environment." },
+    { icon:"📄", text:"A sound artist crumples paper to create the matching sound in a video. Which sound element is this?", options:["Dialogue","Sound Effects","Foley","Ambience"], answer:"Foley", explain:"Paper crumpling recreated to match an action is Foley." }
+  ];
+
+  const $ = id => document.getElementById(id);
+  let current = 0, score = 0, locked = false;
+  let audioCtx = null, musicTimer = null, musicOn = true, soundOn = true, musicStep = 0;
+
+  function audioReady() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return true;
+  }
+  function tone(freq, duration=.12, type="sine", volume=.06, delay=0) {
+    if (!soundOn || !audioReady()) return;
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + delay + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + delay); osc.stop(audioCtx.currentTime + delay + duration);
+  }
+  function clickSound(){ tone(520,.07,"sine",.035); }
+  function correctSound(){ tone(660,.12); tone(880,.18,"sine",.055,.12); }
+  function wrongSound(){ tone(190,.22,"triangle",.055); }
+  function finishSound(){ [523,659,784,1047].forEach((f,i)=>tone(f,.22,"sine",.05,i*.13)); }
+
+  // A light, original looping melody generated locally with Web Audio (no external files).
+  const melody = [523.25,659.25,783.99,659.25,587.33,698.46,783.99,698.46];
+  function startMusic() {
+    stopMusic();
+    if (!musicOn || !audioReady()) return;
+    musicStep = 0;
+    musicTimer = setInterval(() => {
+      if (!musicOn || !audioCtx) return;
+      const f = melody[musicStep % melody.length];
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = "sine"; osc.frequency.value = f;
+      gain.gain.setValueAtTime(.0001,audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(.018,audioCtx.currentTime+.025);
+      gain.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.28);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime+.3);
+      musicStep++;
+    }, 330);
+  }
+  function stopMusic(){ if(musicTimer){clearInterval(musicTimer); musicTimer=null;} }
+  function updateAudioButtons(){
+    $("musicBtn").textContent = musicOn ? "♫ Music: ON" : "♫ Music: OFF";
+    $("soundBtn").textContent = soundOn ? "🔊 Sound: ON" : "🔇 Sound: OFF";
+  }
+  $("musicBtn").addEventListener("click", () => {
+    musicOn = !musicOn; clickSound(); updateAudioButtons();
+    if(musicOn && !$("startScreen").classList.contains("hidden")) startMusic();
+    else if(musicOn && !$("gameScreen").classList.contains("hidden")) startMusic();
+    else stopMusic();
+  });
+  $("soundBtn").addEventListener("click", () => {
+    soundOn = !soundOn; updateAudioButtons(); if(soundOn) clickSound();
+  });
+
+  function showScreen(name) {
+    ["startScreen","gameScreen","finishScreen"].forEach(id => $(id).classList.add("hidden"));
+    $(name).classList.remove("hidden");
+  }
+  function startGame() {
+    audioReady(); clickSound(); current=0; score=0;
+    showScreen("gameScreen"); startMusic(); renderQuestion();
+  }
+  function renderQuestion() {
+    locked=false;
+    const q=questions[current];
+    $("questionCount").textContent=`Question ${current+1} / ${questions.length}`;
+    $("scoreCount").textContent=`⭐ Score: ${score}`;
+    $("progressFill").style.width=`${(current/questions.length)*100}%`;
+    $("questionIcon").textContent=q.icon;
+    $("questionText").textContent=q.text;
+    $("feedback").textContent="";
+    $("feedback").className="feedback";
+    $("nextBtn").classList.add("hidden");
+    const area=$("answers"); area.innerHTML="";
+    q.options.forEach(option=>{
+      const btn=document.createElement("button");
+      btn.type="button"; btn.className="answer"; btn.textContent=option;
+      btn.addEventListener("click",()=>chooseAnswer(option,btn));
+      area.appendChild(btn);
+    });
+  }
+  function chooseAnswer(option, chosenButton) {
+    if(locked) return;
+    locked=true;
+    const q=questions[current];
+    const correct=option===q.answer;
+    if(correct){score++; correctSound(); $("feedback").textContent="🎉 Correct! Great job! "+q.explain; $("feedback").classList.add("good");}
+    else {wrongSound(); $("feedback").textContent="💗 Oops! The correct answer is "+q.answer+". "+q.explain; $("feedback").classList.add("bad");}
+    [...$("answers").children].forEach(btn=>{
+      btn.disabled=true;
+      if(btn.textContent===q.answer) btn.classList.add("correct");
+      else if(btn===chosenButton && !correct) btn.classList.add("wrong");
+    });
+    $("scoreCount").textContent=`⭐ Score: ${score}`;
+    $("progressFill").style.width=`${((current+1)/questions.length)*100}%`;
+    $("nextBtn").textContent=current===questions.length-1 ? "SEE MY RESULT →" : "NEXT QUESTION →";
+    $("nextBtn").classList.remove("hidden");
+  }
+  function finishGame() {
+    stopMusic(); finishSound(); showScreen("finishScreen");
+    $("finalScore").textContent=`${score} / ${questions.length}`;
+    $("resultMessage").textContent = score===10 ? "Perfect score! You are a sound superstar! 🌟" :
+      score>=7 ? "Amazing work! You understand sound elements very well! 💖" :
+      score>=4 ? "Good effort! Keep practising and you will improve! 🌷" :
+      "Nice try! Review the five sound elements and play again! 🌈";
+    makeConfetti();
+  }
+  function makeConfetti(){
+    const box=$("confetti"); box.innerHTML="";
+    const symbols=["✦","♥","✿","●","★"];
+    for(let i=0;i<24;i++){
+      const s=document.createElement("span");
+      s.textContent=symbols[i%symbols.length];
+      s.style.left=(Math.random()*100)+"%";
+      s.style.animationDelay=(Math.random()*2)+"s";
+      s.style.animationDuration=(2.5+Math.random()*2)+"s";
+      s.style.color=["#ec86b2","#a98bd1","#f1bf69","#80c9ae"][i%4];
+      box.appendChild(s);
+    }
+  }
+  $("startBtn").addEventListener("click",startGame);
+  $("nextBtn").addEventListener("click",()=>{
+    clickSound();
+    if(current<questions.length-1){current++;renderQuestion();}
+    else finishGame();
+  });
+  $("playAgainBtn").addEventListener("click",startGame);
+  $("homeBtn").addEventListener("click",()=>{
+    clickSound(); stopMusic(); showScreen("startScreen");
+  });
+  updateAudioButtons();
+})();
+</script>
+</body>
+</html>
